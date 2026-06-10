@@ -1,0 +1,66 @@
+# Two services so the reader can reproduce both halves of the essays:
+#
+#   postgres   - the primary the queue lives on. This is what every default
+#                demo and the integration tests talk to (port 5432).
+#   pgbouncer  - PgBouncer in TRANSACTION pooling mode in front of that
+#                primary (port 6432). This exists for one reason: to
+#                reproduce "The PgBouncer prepared-statement trap". Under
+#                transaction pooling a backend is handed to a client for one
+#                transaction and then returned, so sqlx's per-connection
+#                prepared-statement cache references a statement on a
+#                backend that no longer holds it -> 'prepared statement
+#                "sqlx_s_3" does not exist'. The default demos do NOT use it.
+#
+# Default reader flow:
+#   docker compose up -d postgres
+#   export DATABASE_URL=postgres://postgres:postgres@localhost:5432/skip_locked
+#
+# To reproduce the trap, also bring up pgbouncer and point the demo at it:
+#   docker compose up -d
+#   export PGBOUNCER_URL=postgres://postgres:postgres@localhost:6432/skip_locked
+#   cargo run --example demo_pgbouncer
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: skip_locked
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d skip_locked"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    command:
+      # Mirror the essay's autovacuum posture at the instance level so the
+      # per-table settings in 0001_jobs.sql are not the only thing keeping
+      # vacuum honest under churn.
+      - "postgres"
+      - "-c"
+      - "autovacuum_naptime=10s"
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: skip_locked
+      # The whole point: transaction pooling. This is the mode that breaks
+      # a per-connection prepared-statement cache.
+      POOL_MODE: transaction
+      AUTH_TYPE: scram-sha-256
+      MAX_CLIENT_CONN: "100"
+      DEFAULT_POOL_SIZE: "5"
+      # PgBouncer >=1.21 can rewrite protocol-level prepared statements, which
+      # would hide the trap. Keep it off so the demo reproduces the failure.
+      MAX_PREPARED_STATEMENTS: "0"
+    ports:
+      - "6432:5432"

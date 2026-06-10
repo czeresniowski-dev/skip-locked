@@ -1,0 +1,52 @@
+[package]
+name = "skip-locked"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.93"
+description = "A Postgres job queue in one table, built on FOR NO KEY UPDATE SKIP LOCKED. Reproduces the scars from two essays on running (and migrating) a queue on Postgres."
+license = "MIT"
+
+[lib]
+name = "skip_locked"
+path = "src/lib.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres", "uuid", "chrono", "json", "migrate", "macros"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rand = "0.8"
+futures = "0.3"
+
+[[example]]
+name = "producer"
+path = "examples/producer.rs"
+
+[[example]]
+name = "worker"
+path = "examples/worker.rs"
+
+[[example]]
+name = "demo_skip_locked"
+path = "examples/demo_skip_locked.rs"
+
+[[example]]
+name = "demo_fairness"
+path = "examples/demo_fairness.rs"
+
+[[example]]
+name = "demo_reaper"
+path = "examples/demo_reaper.rs"
+
+[[example]]
+name = "demo_idempotency"
+path = "examples/demo_idempotency.rs"
+
+[[example]]
+name = "demo_pgbouncer"
+path = "examples/demo_pgbouncer.rs"
