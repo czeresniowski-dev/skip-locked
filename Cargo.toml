@@ -50,3 +50,7 @@ path = "examples/demo_idempotency.rs"
 [[example]]
 name = "demo_pgbouncer"
 path = "examples/demo_pgbouncer.rs"
+
+[[example]]
+name = "bench_throughput"
+path = "examples/bench_throughput.rs"
