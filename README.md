@@ -96,6 +96,41 @@ jobs/s end to end is ~400M/day, comfortably above the tens of millions a day
 the queue actually carried. Tune with `BENCH_JOBS`, `BENCH_WORKERS`,
 `BENCH_BATCH`.
 
+### Claim latency
+
+`cargo run --release --example bench_claim_latency` measures the latency of a
+*single* claim (one worker, `claim_batch(.., 1, ..)` + `mark_done`, timing every
+call) rather than aggregate rate. On the same setup (20k jobs):
+
+```
+[claim-latency] n=20000 p50=4.9ms p95=6.9ms p99=7.6ms p99.9=10.9ms
+```
+
+That backs the essays' "claim latency in the single-digit milliseconds" — each
+claim is one `FOR NO KEY UPDATE SKIP LOCKED` round trip plus a commit, so the
+floor is a Postgres transaction's fsync, not the lock itself.
+
+### Migration compute (Python → Rust normalize)
+
+The migration essay says ~70% of the old worker's wall time was in *parse and
+validate*. `bash bench/run_migration.sh` runs the `webhook.normalize` hot path —
+parse a carrier tracking webhook, validate, normalize — in Rust and in Python
+(`bench/celery_normalize.py`) over the **identical** payloads, no database, under
+`/usr/bin/time` for RSS. On the same machine (200k payloads):
+
+| runtime | p50 | p99 | parse+validate share |
+| --- | --- | --- | --- |
+| Rust   | ~1.6 µs | ~1.8 µs  | ~84% |
+| Python | ~5.9 µs | ~13 µs   | ~73% |
+
+Python spends **~73% of the time in parse+validate** (the essay's "~70%"), and
+the Rust hot path is several times faster on the same work. This is a *compute*
+comparison only: the essay's `900ms → 34ms` p99 and `280MB → 40MB` are
+production-tail figures from a loaded Django/Celery prefork fleet under a retry
+storm — not something a single-process microbench reproduces. What's reproducible
+here is the parse/validate share and the direction and rough size of the compute
+win.
+
 ## How it maps to the article
 
 - **`migrations/0001_jobs.sql`** — the `jobs` table exactly as in *The table:

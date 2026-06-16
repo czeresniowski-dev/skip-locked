@@ -54,3 +54,11 @@ path = "examples/demo_pgbouncer.rs"
 [[example]]
 name = "bench_throughput"
 path = "examples/bench_throughput.rs"
+
+[[example]]
+name = "bench_claim_latency"
+path = "examples/bench_claim_latency.rs"
+
+[[example]]
+name = "bench_migration"
+path = "examples/bench_migration.rs"
