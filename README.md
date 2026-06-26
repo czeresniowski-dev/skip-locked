@@ -8,6 +8,9 @@ table. This crate is the runnable companion to both write-ups: every claim in
 them is backed here by an example or a test you can run against a real Postgres
 and watch hold.
 
+This is a clean-room reference implementation built for the portfolio — not
+extracted from any production system.
+
 It backs two articles:
 
 - [PostgreSQL as a queue](https://czeresniowski.dev/writing/postgresql-as-a-queue)
