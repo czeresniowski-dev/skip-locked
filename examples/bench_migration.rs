@@ -13,7 +13,7 @@
 //! Django/Celery process — not reproducible by a microbench. What IS reproducible
 //! is the per-task compute ratio, the parse/validate share, and the RSS delta
 //! between a bare Rust process and a bare Python one (measured by the wrapper
-//! script via `/usr/bin/time -l`).
+//! script via `getrusage`).
 //!
 //!   cargo run --release --example bench_migration -- -dump /tmp/mig
 //!

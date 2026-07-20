@@ -118,8 +118,8 @@ floor is a Postgres transaction's fsync, not the lock itself.
 The migration essay says ~70% of the old worker's wall time was in *parse and
 validate*. `bash bench/run_migration.sh` runs the `webhook.normalize` hot path —
 parse a carrier tracking webhook, validate, normalize — in Rust and in Python
-(`bench/celery_normalize.py`) over the **identical** payloads, no database, under
-`/usr/bin/time` for RSS. On the same machine (200k payloads):
+(`bench/celery_normalize.py`) over the **identical** payloads, no database, with
+peak RSS measured via `getrusage`. On the same machine (200k payloads):
 
 | runtime | p50 | p99 | parse+validate share |
 | --- | --- | --- | --- |
